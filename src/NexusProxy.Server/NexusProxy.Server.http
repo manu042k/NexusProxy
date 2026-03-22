@@ -1,0 +1,6 @@
+@NexusProxy.Server_HostAddress = http://localhost:5117
+
+GET {{NexusProxy.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
