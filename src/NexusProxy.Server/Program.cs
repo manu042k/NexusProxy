@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+using NexusProxy.Core.Configuration;
 using NexusProxy.Core.Interfaces;
 using NexusProxy.Core.Models;
 using NexusProxy.Engine;
@@ -6,15 +8,29 @@ using NexusProxy.Engine.Strategies;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. Load Backend Configuration
-var backendConfigs = builder.Configuration
-    .GetSection("ProxyConfig:Backends")
-    .Get<List<BackendServer>>() ?? new List<BackendServer>();
+// 1. Proxy configuration (strategy + backends)
+builder.Services.Configure<ProxyConfigOptions>(
+    builder.Configuration.GetSection(ProxyConfigOptions.SectionName));
+builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<ProxyConfigOptions>>().Value.Backends);
 
 // 2. Register Services (Dependency Injection)
-builder.Services.AddSingleton(backendConfigs);
-builder.Services.AddSingleton<ILoadBalancer, RoundRobinStrategy>();
-builder.Services.AddHttpClient<ProxyEngine>();
+builder.Services.AddSingleton<RoundRobinStrategy>();
+builder.Services.AddSingleton<WeightedLeastConnection>();
+builder.Services.AddSingleton<ILoadBalancerFactory, LoadBalancerFactory>();
+builder.Services.AddHttpClient<ProxyEngine>()
+    .ConfigurePrimaryHttpMessageHandler(serviceProvider =>
+    {
+        var handler = new HttpClientHandler();
+        var env = serviceProvider.GetRequiredService<IHostEnvironment>();
+        // Development only: corporate proxies / antivirus HTTPS inspection often break default TLS validation.
+        if (env.IsDevelopment())
+        {
+            handler.ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+        }
+
+        return handler;
+    });
 
 var app = builder.Build();
 
@@ -24,13 +40,13 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 
 // 4. The Proxy Logic (Catch-all Route)
 app.Map("{*path}", async (
-    HttpContext context, 
-    ProxyEngine engine, 
-    ILoadBalancer loadBalancer, 
+    HttpContext context,
+    ProxyEngine engine,
+    ILoadBalancerFactory loadBalancerFactory,
     List<BackendServer> servers,
     CancellationToken ct) =>
 {
-    // Pick a server using our strategy
+    var loadBalancer = loadBalancerFactory.GetLoadBalancer();
     var target = loadBalancer.GetNextServer(servers);
 
     if (target == null)
@@ -40,17 +56,20 @@ app.Map("{*path}", async (
         return;
     }
 
-    // Forward the request
-    try 
+    target.IncrementActiveConnections();
+    try
     {
         await engine.ForwardRequestAsync(context, target, ct);
     }
     catch (Exception ex)
     {
-        // Handle cases where the backend is down
-        target.IsHealthy = false; 
+        target.IsHealthy = false;
         context.Response.StatusCode = StatusCodes.Status502BadGateway;
         await context.Response.WriteAsync($"Error contacting backend: {ex.Message}");
+    }
+    finally
+    {
+        target.DecrementActiveConnections();
     }
 });
 
