@@ -9,7 +9,8 @@ public enum LoadBalancingStrategy
     Random,
     LeastConnections,
     WeightedRoundRobin,
-    PowerOfTwoChoices
+    PowerOfTwoChoices,
+    ConsistentHashing
 }
 
 public class ProxyConfigOptions
@@ -17,6 +18,8 @@ public class ProxyConfigOptions
     public const string SectionName = "ProxyConfig";
 
     public LoadBalancingStrategy Strategy { get; set; } = LoadBalancingStrategy.RoundRobin;
+
+    public ConsistentHashingOptions? ConsistentHashing { get; set; }
 
     public List<BackendServer> Backends { get; set; } = new();
 }

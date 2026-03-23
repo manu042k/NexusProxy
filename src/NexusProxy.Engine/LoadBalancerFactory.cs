@@ -32,6 +32,8 @@ public sealed class LoadBalancerFactory : ILoadBalancerFactory
                 _serviceProvider.GetRequiredService<WeightedRoundRobinStrategy>(),
             LoadBalancingStrategy.PowerOfTwoChoices =>
                 _serviceProvider.GetRequiredService<PowerOfTwoChoicesStrategy>(),
+            LoadBalancingStrategy.ConsistentHashing =>
+                _serviceProvider.GetRequiredService<ConsistentHashingStrategy>(),
             _ => throw new InvalidOperationException($"Unknown load balancing strategy: {_strategy}.")
         };
 }
