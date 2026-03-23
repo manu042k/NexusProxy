@@ -16,6 +16,10 @@ builder.Services.AddSingleton(sp => sp.GetRequiredService<IOptions<ProxyConfigOp
 // 2. Register Services (Dependency Injection)
 builder.Services.AddSingleton<RoundRobinStrategy>();
 builder.Services.AddSingleton<WeightedLeastConnection>();
+builder.Services.AddSingleton<RandomStrategy>();
+builder.Services.AddSingleton<LeastConnectionsStrategy>();
+builder.Services.AddSingleton<WeightedRoundRobinStrategy>();
+builder.Services.AddSingleton<PowerOfTwoChoicesStrategy>();
 builder.Services.AddSingleton<ILoadBalancerFactory, LoadBalancerFactory>();
 builder.Services.AddHttpClient<ProxyEngine>()
     .ConfigurePrimaryHttpMessageHandler(serviceProvider =>

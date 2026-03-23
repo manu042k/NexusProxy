@@ -20,10 +20,18 @@ public sealed class LoadBalancerFactory : ILoadBalancerFactory
     public ILoadBalancer GetLoadBalancer() =>
         _strategy switch
         {
-            LoadBalancingStrategy.WeightedLeastConnection =>
-                _serviceProvider.GetRequiredService<WeightedLeastConnection>(),
             LoadBalancingStrategy.RoundRobin =>
                 _serviceProvider.GetRequiredService<RoundRobinStrategy>(),
+            LoadBalancingStrategy.WeightedLeastConnection =>
+                _serviceProvider.GetRequiredService<WeightedLeastConnection>(),
+            LoadBalancingStrategy.Random =>
+                _serviceProvider.GetRequiredService<RandomStrategy>(),
+            LoadBalancingStrategy.LeastConnections =>
+                _serviceProvider.GetRequiredService<LeastConnectionsStrategy>(),
+            LoadBalancingStrategy.WeightedRoundRobin =>
+                _serviceProvider.GetRequiredService<WeightedRoundRobinStrategy>(),
+            LoadBalancingStrategy.PowerOfTwoChoices =>
+                _serviceProvider.GetRequiredService<PowerOfTwoChoicesStrategy>(),
             _ => throw new InvalidOperationException($"Unknown load balancing strategy: {_strategy}.")
         };
 }

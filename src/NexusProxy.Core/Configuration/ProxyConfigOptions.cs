@@ -5,7 +5,11 @@ namespace NexusProxy.Core.Configuration;
 public enum LoadBalancingStrategy
 {
     RoundRobin,
-    WeightedLeastConnection
+    WeightedLeastConnection,
+    Random,
+    LeastConnections,
+    WeightedRoundRobin,
+    PowerOfTwoChoices
 }
 
 public class ProxyConfigOptions
