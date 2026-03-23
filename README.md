@@ -13,7 +13,7 @@ A minimal ASP.NET Core reverse proxy with **configurable load-balancing strategi
 | **NexusProxy.Server**     | ASP.NET Core host, configuration, HTTP pipeline                         |
 | **NexusProxy.Engine**     | Proxy forwarding, middleware, load-balancer implementations and factory |
 | **NexusProxy.Core**       | Shared models, options, and interfaces                                  |
-| **NexusProxy.Tests.Unit** | Unit tests                                                              |
+| **NexusProxy.Tests.Unit** | xUnit tests for strategies and `LoadBalancerFactory` (`tests/NexusProxy.Tests.Unit/`) |
 
 ## Build, run, and test
 
